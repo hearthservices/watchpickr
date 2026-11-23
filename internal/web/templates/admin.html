@@ -1,0 +1,68 @@
+{{define "content"}}
+<h1>Admin</h1>
+
+<form method="post" action="/admin/settings" class="stack settings">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+
+  <div class="settingsrow">
+    <div class="budgetcol">
+      <label>Votes each
+        <input name="max_votes" type="number" min="1" max="50" value="{{.MaxVotes}}">
+      </label>
+
+      <fieldset class="policy">
+        <legend>If lowering it would leave somebody over the limit</legend>
+        <label><input type="radio" name="policy" value="refuse"
+          {{if eq .Policy "refuse"}}checked{{end}}> Refuse the change and tell me who</label>
+        <label><input type="radio" name="policy" value="trim"
+          {{if eq .Policy "trim"}}checked{{end}}> Remove their most recent votes</label>
+        <label><input type="radio" name="policy" value="grandfather"
+          {{if eq .Policy "grandfather"}}checked{{end}}> Let them keep what they have until they release one</label>
+      </fieldset>
+    </div>
+
+    <div class="options">
+      <p class="optionshead muted">Options</p>
+      <label class="toggle">
+        <input type="checkbox" class="switch" name="allow_series" value="1"
+               {{if .AllowSeries}}checked{{end}}>
+        <span>Allow TV series to be suggested</span>
+      </label>
+    </div>
+  </div>
+
+  <button type="submit">Save settings</button>
+</form>
+
+<h2>Members</h2>
+<div class="tablewrap">
+<table class="filmtable">
+  <thead><tr>
+    <th>Name</th><th class="num">Votes used</th><th class="num">Suggested</th><th></th>
+  </tr></thead>
+  <tbody>
+  {{$root := .}}
+  {{range .Users}}
+  <tr>
+    <td>{{.Username}}{{if .IsAdmin}} <span class="kind">Admin</span>{{end}}</td>
+    <td class="num">{{.VotesUsed}}</td>
+    <td class="num">{{.Suggested}}</td>
+    <td class="actions">
+      <form method="post" action="/admin/users/{{.ID}}/admin">
+        <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+        <input type="hidden" name="admin" value="{{if .IsAdmin}}0{{else}}1{{end}}">
+        <button type="submit"{{if .IsAdmin}} class="undo"{{end}}>{{if .IsAdmin}}Revoke admin{{else}}Make admin{{end}}</button>
+      </form>
+      {{if ne .ID $root.User.ID}}
+      <form method="post" action="/admin/users/{{.ID}}/delete">
+        <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+        <button type="submit" class="danger">Remove</button>
+      </form>
+      {{end}}
+    </td>
+  </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

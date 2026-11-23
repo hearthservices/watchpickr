@@ -1,0 +1,194 @@
+{{define "board"}}
+<div id="board">
+  <p class="budget">
+    {{if .OverBy}}
+      You are holding <strong>{{.VotesUsed}}</strong> votes, but the limit is now
+      <strong>{{.MaxVotes}}</strong>. Take back {{.OverBy}} to vote again.
+    {{else}}
+      You have <strong>{{.VotesLeft}}</strong> of {{.MaxVotes}} vote{{if ne .MaxVotes 1}}s{{end}} left.
+    {{end}}
+  </p>
+
+  {{if .Filtering}}
+    <h2>{{len .Results}} match{{if ne (len .Results) 1}}es{{end}}</h2>
+    {{if .Results}}
+      {{if .IsList}}{{template "filmtable" dict "Films" .Results "Root" $}}
+      {{else if .IsCompact}}{{template "compact" dict "Films" .Results "Root" $}}
+      {{else}}<ul class="films">{{range .Results}}{{template "card" dict "M" . "Root" $}}{{end}}</ul>{{end}}
+    {{else}}
+      <p class="muted">Nothing on the board matches that.</p>
+    {{end}}
+
+  {{else if .IsList}}
+    {{if .Open}}<h2>In the running</h2>{{template "filmtable" dict "Films" .Open "Root" $}}{{end}}
+    {{if .Watched}}<h2>Already watched</h2>{{template "filmtable" dict "Films" .Watched "Root" $}}{{end}}
+
+  {{else if .IsCompact}}
+    {{if .Open}}<h2>In the running</h2>{{template "compact" dict "Films" .Open "Root" $}}{{end}}
+    {{if .Watched}}<h2>Already watched</h2>{{template "compact" dict "Films" .Watched "Root" $}}{{end}}
+
+  {{else}}
+    {{if .Top}}
+    <h2>In the lead</h2>
+    <ol class="podium">{{range .Top}}{{template "card" dict "M" . "Root" $}}{{end}}</ol>
+    {{end}}
+    {{if .Rest}}
+    <h2>Also suggested</h2>
+    <ul class="films">{{range .Rest}}{{template "card" dict "M" . "Root" $}}{{end}}</ul>
+    {{end}}
+    {{if .Watched}}
+    <h2>Already watched</h2>
+    <ul class="films watched">{{range .Watched}}{{template "card" dict "M" . "Root" $}}{{end}}</ul>
+    {{end}}
+  {{end}}
+
+  {{if not .Filtering}}{{if not .Top}}{{if not .Rest}}
+  <p class="muted">Nothing suggested yet. Use <strong>Suggest a film</strong> to add one.</p>
+  {{end}}{{end}}{{end}}
+</div>
+{{end}}
+
+
+{{define "filmtable"}}
+{{$root := .Root}}
+<div class="tablewrap">
+<table class="filmtable">
+  <thead><tr>
+    <th>Title</th><th>Year</th><th>Rating</th><th class="num">Votes</th><th></th>
+  </tr></thead>
+  <tbody>
+  {{range .Films}}
+  <tr id="film-{{.ID}}">
+    <td>
+      <a href="{{.IMDbURL}}" rel="noreferrer noopener" target="_blank">{{.Title}}</a>
+      {{if eq .Kind "series"}}<span class="kind">Series</span>{{end}}
+    {{template "elsewhere" .}}
+    </td>
+    <td>{{if .Year}}{{.Year}}{{end}}</td>
+    <td>{{.ScoreLabel}}</td>
+    <td class="num">{{.Votes}}</td>
+    <td>{{template "votebutton" dict "M" . "Root" $root}}</td>
+  </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+
+{{define "compact"}}
+{{$root := .Root}}
+<ul class="compact">
+  {{range .Films}}
+  <li id="film-{{.ID}}">
+    {{if .PosterFile}}
+    <img class="thumb" src="/posters/{{.PosterFile}}?v={{$root.AssetVersion}}"
+         alt="" width="32" height="48" loading="lazy">
+    {{else}}
+    <span class="thumb placeholder" aria-hidden="true"></span>
+    {{end}}
+    <div class="compactmain">
+      <a href="{{.IMDbURL}}" rel="noreferrer noopener" target="_blank">{{.Title}}</a>
+      {{if eq .Kind "series"}}<span class="kind">Series</span>{{end}}
+      {{template "elsewhere" .}}
+    </div>
+    <span class="votes">{{.Votes}}</span>
+    {{template "votebutton" dict "M" . "Root" $root}}
+  </li>
+  {{end}}
+</ul>
+{{end}}
+
+
+{{define "votebutton"}}
+{{if not .M.Watched}}
+<form method="post" action="/movies/{{.M.ID}}/{{if .M.VotedByMe}}unvote{{else}}vote{{end}}">
+  <input type="hidden" name="csrf" value="{{.Root.CSRF}}">
+  <input type="hidden" name="back" value="{{.Root.BackQuery}}">
+  <button type="submit"{{if .M.VotedByMe}} class="undo"{{else if not .Root.VotesLeft}} disabled{{end}}>{{if .M.VotedByMe}}Undo{{else}}Vote{{end}}</button>
+</form>
+{{end}}
+{{end}}
+
+
+{{define "elsewhere"}}
+{{if not .Watched}}{{with .WatchedElsewhere}}
+<span class="elsewhere">Watched at {{.PollName}}, {{.WatchedAt.Format "2 Jan 2006"}}</span>
+{{end}}{{end}}
+{{end}}
+
+
+{{define "card"}}
+{{$m := .M}}{{$root := .Root}}
+<li class="film" id="film-{{$m.ID}}">
+  <div class="film-body">
+    {{if $m.PosterFile}}
+    <img class="poster" src="/posters/{{$m.PosterFile}}?v={{$root.AssetVersion}}"
+         alt="" width="92" height="138" loading="lazy">
+    {{else}}
+    <div class="poster placeholder" aria-hidden="true"></div>
+    {{end}}
+    <div class="film-main">
+      <div class="film-head">
+        <a href="{{$m.IMDbURL}}" rel="noreferrer noopener" target="_blank">{{$m.Title}}</a>
+        <span class="votes">{{$m.Votes}} vote{{if ne $m.Votes 1}}s{{end}}</span>
+      </div>
+        {{if eq $m.Kind "series"}}<span class="kind">TV-Series</span>{{end}}
+      <p class="muted small">
+        {{if $m.Year}}{{$m.Year}}{{end}}
+        {{if $m.RuntimeMin}} &middot; {{$m.RuntimeMin}} min{{end}}
+        {{if $m.AddedBy}} &middot; suggested by {{$m.AddedBy}}{{end}}
+        {{if $m.Watched}} &middot; watched{{end}}
+      </p>
+      {{template "elsewhere" $m}}
+      {{if $m.Ratings}}
+      <p class="ratings">
+        {{range $m.Ratings}}<span class="score">{{.Label}} {{printf "%.0f" .Score}}</span>{{end}}
+      </p>
+      {{end}}
+      {{with $m.Synopsis}}<p class="synopsis">{{.}}</p>{{end}}
+    </div>
+  </div>
+  <div class="actions">
+    {{if not $m.Watched}}
+      {{if $m.VotedByMe}}
+        <form method="post" action="/movies/{{$m.ID}}/unvote">
+          <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+          <input type="hidden" name="back" value="{{$root.BackQuery}}">
+          <button type="submit" class="undo">Take my vote back</button>
+        </form>
+      {{else}}
+        <form method="post" action="/movies/{{$m.ID}}/vote">
+          <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+          <input type="hidden" name="back" value="{{$root.BackQuery}}">
+          <button type="submit" {{if not $root.VotesLeft}}disabled{{end}}>Vote</button>
+        </form>
+      {{end}}
+    {{end}}
+
+    {{if $root.User.IsAdmin}}
+      {{if $m.Watched}}
+        <form method="post" action="/movies/{{$m.ID}}/reopen">
+          <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+          <input type="hidden" name="back" value="{{$root.BackQuery}}">
+          <button type="submit" class="undo">Put back in the running</button>
+        </form>
+      {{else}}
+        <form method="post" action="/movies/{{$m.ID}}/watched">
+          <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+          <input type="hidden" name="back" value="{{$root.BackQuery}}">
+          <button type="submit">We watched this</button>
+        </form>
+      {{end}}
+    {{end}}
+
+    {{if or $root.User.IsAdmin (and (eq $m.AddedByID $root.User.ID) (not $m.Votes) (not $m.Watched))}}
+      <form method="post" action="/movies/{{$m.ID}}/delete">
+        <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+        <input type="hidden" name="back" value="{{$root.BackQuery}}">
+        <button type="submit" class="danger">Remove</button>
+      </form>
+    {{end}}
+  </div>
+</li>
+{{end}}

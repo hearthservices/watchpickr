@@ -1,0 +1,71 @@
+{{define "content"}}{{template "podiumboard" .}}{{end}}
+
+{{define "podiumboard"}}
+<div id="podium" data-code="{{.Code}}">
+  <header class="podiumhead">
+    <h1>{{.Poll.Name}}</h1>
+    <p class="muted">
+      {{if .Poll.Closed}}Voting has closed{{else if .Top}}Leading right now{{else}}Nothing voted for yet{{end}}
+    </p>
+  </header>
+
+  {{if .Top}}
+  {{$root := .}}
+  <ol class="podium3">
+    {{range $m := .Top}}
+    <li class="seat" id="film-{{$m.ID}}">
+      <span class="rank rank-{{$m.Rank}}">{{$m.Rank}}</span>
+      {{if $m.PosterFile}}
+      <img class="seatposter" src="/posters/{{$m.PosterFile}}?v={{$root.AssetVersion}}" alt="">
+      {{else}}
+      <div class="seatposter placeholder" aria-hidden="true"></div>
+      {{end}}
+      <div class="seatbody">
+        <h2>{{$m.Title}}{{if eq $m.Kind "series"}} <span class="kind">Series</span>{{end}}</h2>
+        <p class="muted small">
+          {{if $m.Year}}{{$m.Year}}{{end}}
+          {{if $m.RuntimeMin}} &middot; {{$m.RuntimeMin}} min{{end}}
+          {{if $m.AddedBy}} &middot; suggested by {{$m.AddedBy}}{{end}}
+        </p>
+        {{if $m.Ratings}}
+        <p class="ratings">
+          {{range $m.Ratings}}<span class="score">{{.Label}} {{printf "%.0f" .Score}}</span>{{end}}
+        </p>
+        {{end}}
+        <p class="tally">{{$m.Votes}} vote{{if ne $m.Votes 1}}s{{end}}</p>
+
+        {{if $root.CanVote}}
+        <div class="actions">
+          {{if $m.VotedByMe}}
+          <form method="post" action="/movies/{{$m.ID}}/unvote">
+            <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+            <input type="hidden" name="to" value="podium">
+            <input type="hidden" name="code" value="{{$root.Code}}">
+            <button type="submit" class="undo">Take my vote back</button>
+          </form>
+          {{else}}
+          <form method="post" action="/movies/{{$m.ID}}/vote">
+            <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+            <input type="hidden" name="to" value="podium">
+            <input type="hidden" name="code" value="{{$root.Code}}">
+            <button type="submit"{{if not $root.VotesLeft}} disabled{{end}}>Vote</button>
+          </form>
+          {{end}}
+        </div>
+        {{else if $root.CanMarkWatched}}
+        <div class="actions">
+          <form method="post" action="/sessions/{{$root.Poll.ID}}/movies/{{$m.ID}}/watched">
+            <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+            <input type="hidden" name="to" value="podium">
+            <input type="hidden" name="code" value="{{$root.Code}}">
+            <button type="submit">We watched this</button>
+          </form>
+        </div>
+        {{end}}
+      </div>
+    </li>
+    {{end}}
+  </ol>
+  {{end}}
+</div>
+{{end}}

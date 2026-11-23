@@ -1,0 +1,12 @@
+{{define "content"}}
+<h1>Join {{.Poll.Name}}</h1>
+<p class="muted">{{.Poll.MaxVotes}} vote{{if ne .Poll.MaxVotes 1}}s{{end}} each. No account needed.</p>
+{{with .Error}}<p class="error">{{.}}</p>{{end}}
+<form method="post" action="/join/{{.Code}}" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>What shall we call you?
+    <input name="name" value="{{.Name}}" autocomplete="nickname" autofocus required>
+  </label>
+  <button type="submit">Join</button>
+</form>
+{{end}}

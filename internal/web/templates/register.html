@@ -1,0 +1,21 @@
+{{define "content"}}
+<h1>Create an account</h1>
+{{with .Error}}<p class="error">{{.}}</p>{{end}}
+<form method="post" action="/register" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Username
+    <input name="username" value="{{.Name}}" autocomplete="username" autofocus required>
+  </label>
+  <label>Password
+    <input name="password" type="password" autocomplete="new-password" required>
+    <small class="muted">At least {{.MinPassword}} characters.</small>
+  </label>
+  {{if .NeedsCode}}
+  <label>Invite code
+    <input name="code" required>
+  </label>
+  {{end}}
+  <button type="submit">Create account</button>
+</form>
+<p class="muted">Already have one? <a href="/login">Log in</a>.</p>
+{{end}}

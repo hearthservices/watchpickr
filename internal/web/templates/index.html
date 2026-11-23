@@ -1,0 +1,98 @@
+{{define "content"}}
+<div class="pagehead">
+  <h1>{{.Poll.Name}}</h1>
+  <a class="btn" href="#suggest">Suggest a film</a>
+</div>
+
+<dialog id="suggest" class="sheet">
+  <div class="sheetbody">
+    <div class="sheethead">
+      <h2>Suggest a film</h2>
+      <a class="sheetclose" href="#" aria-label="Close">&times;</a>
+    </div>
+    <form method="post" action="/movies" class="stack">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <input type="hidden" name="back" value="{{.BackQuery}}">
+      <label>IMDb link
+        <input name="link" autofocus placeholder="https://www.imdb.com/title/tt0111161/" required>
+      </label>
+      <label>Title
+        {{if .LookupEnabled}}
+          <input name="title" placeholder="optional — we'll look it up">
+        {{else}}
+          <input name="title" required>
+        {{end}}
+      </label>
+      <button type="submit">Suggest</button>
+    </form>
+  </div>
+</dialog>
+
+<form class="filters" method="get" action="/">
+  <input type="search" name="q" value="{{.Query.Text}}" aria-label="Search"
+         placeholder="title, genre, who suggested it…">
+  <button type="submit">Search</button>
+  <a class="btn" href="#filters">Filters{{with .Query.FilterCount}} ({{.}}){{end}}</a>
+  {{if .Filtering}}<a class="clear" href="/?view={{.View}}">Clear</a>{{end}}
+  <input type="hidden" name="view" value="{{.View}}">
+
+  <dialog id="filters" class="sheet">
+    <div class="sheetbody">
+      <div class="sheethead">
+        <h2>Filters</h2>
+        <a class="sheetclose" href="#" aria-label="Close">&times;</a>
+      </div>
+      <div class="stack">
+        <label>Kind
+          <select name="kind" autofocus>
+            <option value="">Films &amp; series</option>
+            <option value="movie"{{if eq .Query.Kind "movie"}} selected{{end}}>Films only</option>
+            <option value="series"{{if eq .Query.Kind "series"}} selected{{end}}>Series only</option>
+          </select>
+        </label>
+        <label>Genre
+          <select name="genre">
+            <option value="">Any genre</option>
+            {{$sel := .Query.Genre}}
+            {{range .AllGenres}}<option value="{{.}}"{{if eq . $sel}} selected{{end}}>{{.}}</option>{{end}}
+          </select>
+        </label>
+        <label>Rating
+          <select name="min_rating">
+            <option value="">Any rating</option>
+            {{$min := .Query.MinRatingLabel}}
+            {{range $v := (list "60" "70" "80" "85" "90")}}
+              <option value="{{$v}}"{{if eq $v $min}} selected{{end}}>{{$v}}+</option>
+            {{end}}
+          </select>
+        </label>
+        <label>Sort by
+          <select name="sort">
+            <option value="votes">Most votes</option>
+            <option value="rating"{{if eq .Query.Sort "rating"}} selected{{end}}>Best rated</option>
+            <option value="year"{{if eq .Query.Sort "year"}} selected{{end}}>Newest release</option>
+            <option value="new"{{if eq .Query.Sort "new"}} selected{{end}}>Recently added</option>
+            <option value="title"{{if eq .Query.Sort "title"}} selected{{end}}>Title</option>
+          </select>
+        </label>
+        <label>Show
+          <select name="show">
+            <option value="open">In the running</option>
+            <option value="all"{{if eq .Query.Show "all"}} selected{{end}}>Everything</option>
+            <option value="watched"{{if eq .Query.Show "watched"}} selected{{end}}>Already watched</option>
+          </select>
+        </label>
+        <button type="submit">Show results</button>
+      </div>
+    </div>
+  </dialog>
+</form>
+
+<p class="viewtoggle">
+  <a href="{{.CardsURL}}"{{if eq .View "cards"}} aria-current="page"{{end}}>Cards</a>
+  <a href="{{.CompactURL}}"{{if eq .View "compact"}} aria-current="page"{{end}}>Compact</a>
+  <a href="{{.ListURL}}"{{if eq .View "list"}} aria-current="page"{{end}}>List</a>
+</p>
+
+{{template "board" .}}
+{{end}}

@@ -1,0 +1,36 @@
+{{define "content"}}
+<h1>Settings</h1>
+
+<h2>Your name</h2>
+{{with .Error}}<p class="error">{{.}}</p>{{end}}
+<form method="post" action="/settings/name" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Your name
+    <input name="username" value="{{.Name}}" required autofocus>
+  </label>
+  <p class="muted small">This is the name on every film you have suggested and
+    in the member list. Changing it updates all of them at once.</p>
+  <button type="submit">Save name</button>
+</form>
+
+<h2>Password</h2>
+{{if eq .User.Kind "member"}}
+{{with .PasswordError}}<p class="error">{{.}}</p>{{end}}
+<form method="post" action="/settings/password" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Current password
+    <input type="password" name="current" required autocomplete="current-password">
+  </label>
+  <label>New password
+    <input type="password" name="new" required autocomplete="new-password">
+  </label>
+  <label>Repeat new password
+    <input type="password" name="repeat" required autocomplete="new-password">
+  </label>
+  <p class="muted small">At least {{.MinPassword}} characters.</p>
+  <button type="submit">Change password</button>
+</form>
+{{else}}
+<p class="muted">Guest accounts do not have a password. Your name is all there is.</p>
+{{end}}
+{{end}}

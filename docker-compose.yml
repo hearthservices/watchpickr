@@ -1,0 +1,30 @@
+services:
+  watchpickr:
+    build: .
+    image: watchpickr:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - watchpickr-data:/data
+    environment:
+      WATCHPICKR_SITE_NAME: WatchPickr
+      # Only turn this on behind HTTPS, otherwise the login cookie is never sent.
+      WATCHPICKR_SECURE_COOKIES: "false"
+      # Applied on every start. If empty, a password is generated and logged once.
+      WATCHPICKR_ADMIN_PASSWORD: ${WATCHPICKR_ADMIN_PASSWORD:-}
+      WATCHPICKR_REGISTRATION_CODE: ${WATCHPICKR_REGISTRATION_CODE:-}
+      TMDB_API_KEY: ${TMDB_API_KEY:-}
+      OMDB_API_KEY: ${OMDB_API_KEY:-}
+    restart: unless-stopped
+
+  # docker compose up demo
+  demo:
+    build: .
+    image: watchpickr:latest
+    command: ["-demo"]
+    ports:
+      - "8081:8080"
+    profiles: ["demo"]
+
+volumes:
+  watchpickr-data:

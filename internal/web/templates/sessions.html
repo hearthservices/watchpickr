@@ -1,0 +1,43 @@
+{{define "content"}}
+<h1>Session boards</h1>
+
+<form method="post" action="/sessions" class="stack">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Name <input name="name" placeholder="Friday film night"></label>
+  <label>Votes each <input name="max_votes" type="number" min="1" max="20" value="3"></label>
+  <button type="submit">Open a session</button>
+</form>
+
+{{if .Sessions}}
+<div class="tablewrap">
+<table class="filmtable">
+  <thead><tr><th>Board</th><th>Code</th><th>Link</th><th>State</th><th></th></tr></thead>
+  <tbody>
+  {{$root := .}}
+  {{range .Sessions}}
+  <tr>
+    <td><a href="/podium/{{.JoinCode}}">{{.Name}}</a></td>
+    <td><code class="joincode">{{.JoinCode}}</code></td>
+    <td><code>{{$root.BaseURL}}/join/{{.JoinCode}}</code></td>
+    <td>{{if .Closed}}closed{{else}}open{{end}}</td>
+    <td class="actions">
+      {{if not .Closed}}
+      <form method="post" action="/sessions/{{.ID}}/close">
+        <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+        <button type="submit">Close voting</button>
+      </form>
+      {{end}}
+      <form method="post" action="/sessions/{{.ID}}/delete">
+        <input type="hidden" name="csrf" value="{{$root.CSRF}}">
+        <button type="submit" class="danger">Delete everything</button>
+      </form>
+    </td>
+  </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{else}}
+<p class="muted">No sessions yet.</p>
+{{end}}
+{{end}}

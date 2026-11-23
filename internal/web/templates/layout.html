@@ -1,0 +1,61 @@
+{{define "layout"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} &middot; {{.SiteName}}</title>
+<link rel="stylesheet" href="/static/style.css?v={{.AssetVersion}}">
+</head>
+<body{{if .Bare}} class="bare"{{end}}>
+{{if not .Bare}}
+{{if and .User .Poll}}{{if eq .User.PollID .Poll.ID}}
+<p class="sessionbanner">
+  You are voting in <strong>{{.Poll.Name}}</strong>, a one-off session.
+  {{if .Poll.Closed}} Voting has closed.{{end}}
+</p>
+{{end}}{{end}}
+<header class="bar topbar">
+  <a class="brand" href="/">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+    </svg>
+    {{.SiteName}}
+  </a>
+  {{if .User}}
+  <nav class="bar">
+    <span class="muted">{{.User.Username}}{{if .User.IsAdmin}} &middot; admin{{end}}</span>
+    <details class="menu">
+      <summary aria-label="Menu" title="Menu">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor"
+                  stroke-width="4" stroke-dasharray="2.9 2.99"/>
+          <circle cx="12" cy="12" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </summary>
+      <div class="menupanel">
+        <a href="/settings">Settings</a>
+        {{if .User.IsAdmin}}
+        <a href="/admin">Admin settings</a>
+        <a href="/sessions">Session boards</a>
+        {{end}}
+      </div>
+    </details>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button type="submit" class="undo">Log out</button>
+    </form>
+  </nav>
+  {{end}}
+</header>
+{{end}}
+<main>
+{{with .Flash}}
+<p class="flash flash-{{.Level}}" role="{{if eq .Level "error"}}alert{{else}}status{{end}}">{{.Text}}</p>
+{{end}}
+{{template "content" .}}
+</main>
+<script src="/static/app.js?v={{.AssetVersion}}" defer></script>
+</body>
+</html>
+{{end}}
